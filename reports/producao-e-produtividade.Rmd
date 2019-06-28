@@ -35,7 +35,7 @@ glimpse(cacc_tudo)
 
 ### Produção e produtividade de artigos
 
-Uma das maneiras de avaliar a produção dos docentes que a CAPES utiliza é quantificando a produção de artigos pelos docentes. Os artigos são categorizados em extratos ordenados (A1 é o mais alto), e separados entre artigos em conferências e periódicos. Usaremos para esse lab a produção em periódicos avaliados com A1, A2 e B1. 
+Uma das maneiras de avaliar a produção dos docentes que a CAPES utiliza é quantificando a produção de artigos pelos docentes. Os artigos são categorizados em extratos ordenados (A1 é o mais alto), e separados entre artigos em conferências e periódicos. Usaremos para esse lab a produção em periódicos avaliados com A1, A2 e B1.
 
 ```{r}
 cacc = cacc_tudo %>%
@@ -47,7 +47,8 @@ cacc = cacc_tudo %>%
     doutorados = Teses,
     tem_doutorado = tolower(`Tem doutorado`) == "sim",
     mestrados_pprof = mestrados / docentes,
-    doutorados_pprof = doutorados / docentes
+    doutorados_pprof = doutorados / docentes,
+    nivel = tolower(`Nível`)
   )
 
 cacc_md = cacc %>% 
@@ -185,3 +186,28 @@ Considerando agora esses três fatores, o que podemos dizer sobre como cada um d
 Diferente de medirmos produção (total produzido), é medirmos produtividade (produzido / utilizado). Abaixo focaremos nessa análise. Para isso crie um modelo que investiga como um conjunto de fatores que você julga que são relevantes se relacionam com a produtividade dos programas. Crie um modelo que avalie como _pelo menos 3 fatores_ se relacionam com a produtividade de um programa. Pode reutilizar fatores que já definimos e analizamos para produção. Mas cuidado para não incluir fatores que sejam função linear de outros já incluídos (ex: incluir A, B e um tercero C=A+B)
 
 Produza abaixo o modelo e um texto que comente (i) o modelo, tal como os que fizemos antes, e (ii) as implicações - o que aprendemos sobre como funcionam programas de pós no brasil?.
+
+```{r}
+cacc %>% 
+  ggplot(aes(x = docentes, y = produtividade)) + 
+  geom_point()
+```
+
+```{r}
+cacc_dout <- cacc %>% filter(tem_doutorado == TRUE)
+modelo1 = lm(produtividade ~ docentes + mestrados_pprof + doutorados_pprof + nivel, data = cacc_dout)
+
+tidy(modelo1, conf.int = TRUE, conf.level = 0.95)
+glance(modelo1)
+```
+
+```{r}
+cacc_augmented = cacc_dout %>% 
+  add_predictions(modelo1) 
+
+cacc_augmented %>% 
+  ggplot(aes(x = pred)) + 
+  geom_point(aes(y = produtividade - pred)) + 
+  labs(y = "Erro")
+```
+
